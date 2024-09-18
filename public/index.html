@@ -3,32 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebSocket Client</title>
+  <title>WebSocket Test</title>
 </head>
 <body>
-  <h1>WebSocket Client</h1>
-  <input id="messageInput" type="text" placeholder="Enter message">
-  <button id="sendButton">Send</button>
-  <button id="toggleErrorButton">Toggle Error</button>
+  <input type="text" id="inputField" placeholder="Type something...">
+  <button id="submitBtn">Submit</button>
+  <button id="toggleErrorBtn">Toggle Error</button>
 
-  <script>
-    const ws = new WebSocket('ws://your-websocket-url'); // Replace with your WebSocket URL
-
-    document.getElementById('sendButton').addEventListener('click', () => {
-      const message = document.getElementById('messageInput').value;
-      ws.send(JSON.stringify({
-        type: 'event.interaction',
-        data: message
-      }));
-    });
-
-    document.getElementById('toggleErrorButton').addEventListener('click', () => {
-      const randomString = Math.random().toString(36).substring(2, 15);
-      ws.send(JSON.stringify({
-        type: 'event.error',
-        data: randomString
-      }));
-    });
-  </script>
+  <script src="/websocket.js"></script>
 </body>
 </html>
