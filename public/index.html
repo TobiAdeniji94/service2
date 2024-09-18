@@ -3,39 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebSocket Test</title>
+  <title>WebSocket Client</title>
 </head>
 <body>
-  <h1>WebSocket Interaction</h1>
-  <input type="text" id="interactionInput" placeholder="Type something..." />
-  <button id="sendButton">Submit</button>
-  <button id="toggleError">Toggle Error</button>
+  <h1>WebSocket Client</h1>
+  <input id="messageInput" type="text" placeholder="Enter message">
+  <button id="sendButton">Send</button>
+  <button id="toggleErrorButton">Toggle Error</button>
 
   <script>
-    const ws = new WebSocket('https://service2-omega.vercel.app/');
+    const ws = new WebSocket('ws://your-websocket-url'); // Replace with your WebSocket URL
 
-    ws.onopen = () => {
-      console.log('WebSocket is connected');
-    };
-
-    ws.onmessage = (message) => {
-      console.log('Received:', message.data);
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket is closed');
-    };
-
-    // Send interaction event
     document.getElementById('sendButton').addEventListener('click', () => {
-      const input = document.getElementById('interactionInput').value;
-      ws.send(JSON.stringify({ type: 'event.interaction', data: input }));
+      const message = document.getElementById('messageInput').value;
+      ws.send(JSON.stringify({
+        type: 'event.interaction',
+        data: message
+      }));
     });
 
-    // Send error event
-    document.getElementById('toggleError').addEventListener('click', () => {
+    document.getElementById('toggleErrorButton').addEventListener('click', () => {
       const randomString = Math.random().toString(36).substring(2, 15);
-      ws.send(JSON.stringify({ type: 'event.error', data: randomString }));
+      ws.send(JSON.stringify({
+        type: 'event.error',
+        data: randomString
+      }));
     });
   </script>
 </body>
