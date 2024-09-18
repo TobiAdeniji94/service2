@@ -1,46 +1,62 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 const WebSocket = require('ws');
 
-// Initialize Express app
+// Create an instance of express
 const app = express();
 
 // Define file paths
 const logFolder = path.join(__dirname, 'logs');
 const errorsFilePath = path.join(logFolder, 'errors.txt');
 const interactionsFilePath = path.join(logFolder, 'interactions.txt');
+const htmlFilePath = path.join(__dirname, 'public', 'index.html');
 
 if (!fs.existsSync(logFolder)) {
   fs.mkdirSync(logFolder);
 }
 
-// Serve static HTML page from /public folder
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Route for downloading errors.txt
+// Serve the static HTML file for the front end
+app.get('/', (req, res) => {
+  res.sendFile(htmlFilePath);
+});
+
+// Endpoint to download errors.txt file
 app.get('/errors.txt', (req, res) => {
-  res.download(errorsFilePath, 'errors.txt', (err) => {
+  fs.access(errorsFilePath, fs.constants.F_OK, (err) => {
     if (err) {
-      res.status(500).send('Error downloading errors.txt');
+      return res.status(404).send('errors.txt not found');
     }
+    res.download(errorsFilePath, 'errors.txt', (err) => {
+      if (err) {
+        res.status(500).send('Error downloading errors.txt');
+      }
+    });
   });
 });
 
-// Route for downloading interactions.txt
+// Endpoint to download interactions.txt file
 app.get('/interactions.txt', (req, res) => {
-  res.download(interactionsFilePath, 'interactions.txt', (err) => {
+  fs.access(interactionsFilePath, fs.constants.F_OK, (err) => {
     if (err) {
-      res.status(500).send('Error downloading interactions.txt');
+      return res.status(404).send('interactions.txt not found');
     }
+    res.download(interactionsFilePath, 'interactions.txt', (err) => {
+      if (err) {
+        res.status(500).send('Error downloading interactions.txt');
+      }
+    });
   });
 });
 
-// Start the server and WebSocket on the same port
-const server = require('http').createServer(app);
+// Create HTTP server and pass express app to it
+const server = http.createServer(app);
 
-// Initialize WebSocket server on top of the HTTP server
+// Set up WebSocket server on top of the HTTP server
 const wss = new WebSocket.Server({ server });
+console.log("WebSocket server started");
 
 // WebSocket connection logic
 wss.on('connection', (ws) => {
@@ -48,7 +64,7 @@ wss.on('connection', (ws) => {
 
   ws.on('message', (message) => {
     const event = JSON.parse(message);
-    console.log('Received event:', event);
+    console.log("Received event:", event);
 
     const logMessage = `${event.type}: ${event.data}\n`;
 
@@ -77,5 +93,5 @@ wss.on('connection', (ws) => {
 // Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });

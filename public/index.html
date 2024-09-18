@@ -8,14 +8,14 @@
 <body>
     <h1>WebSocket Client</h1>
 
-    <label for="interactionInput">Enter interaction data:</label>
     <input type="text" id="interactionInput" placeholder="Type something...">
-    <button id="sendInteraction">Submit Interaction</button>
+    <button id="sendInteraction">Submit</button>
     <button id="toggleError">Toggle Error</button>
 
     <script>
         // WebSocket connection
         const ws = new WebSocket('ws://service-wnu7.onrender.com');
+        
 
         ws.onopen = function() {
             console.log('WebSocket connection established');
