@@ -1,91 +1,66 @@
+const express = require('express');
 const fs = require('fs');
-const http = require('http');
 const path = require('path');
 const WebSocket = require('ws');
 
-// Define file paths
-const errorsFilePath = path.join(__dirname, 'logs', 'errors.txt');
-const interactionsFilePath = path.join(__dirname, 'logs', 'interactions.txt');
+// Initialize Express app
+const app = express();
 
-// Create HTTP server to serve the HTML and text files
-const server = http.createServer((req, res) => {
-  if (req.url === '/') {
-    // Serve the HTML file
-    const filePath = path.join(__dirname, 'public', 'index.html');
-    fs.readFile(filePath, (err, content) => {
-      if (err) {
-        res.writeHead(500);
-        res.end('Error loading HTML page');
-      } else {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end(content);
-      }
-    });
-  } else if (req.url === '/errors.txt') {
-    // Serve the errors.txt file as a downloadable file
-    fs.access(errorsFilePath, fs.constants.F_OK, (err) => {
-      if (err) {
-        res.writeHead(404);
-        res.end('errors.txt not found');
-        return;
-      }
-      fs.readFile(errorsFilePath, (err, content) => {
-        if (err) {
-          res.writeHead(500);
-          res.end('Error loading errors.txt');
-        } else {
-          res.writeHead(200, {
-            'Content-Type': 'text/plain',
-            'Content-Disposition': 'attachment; filename="errors.txt"'
-          });
-          res.end(content);
-        }
-      });
-    });
-  } else if (req.url === '/interactions.txt') {
-    // Serve the interactions.txt file as a downloadable file
-    fs.access(interactionsFilePath, fs.constants.F_OK, (err) => {
-      if (err) {
-        res.writeHead(404);
-        res.end('interactions.txt not found');
-        return;
-      }
-      fs.readFile(interactionsFilePath, (err, content) => {
-        if (err) {
-          res.writeHead(500);
-          res.end('Error loading interactions.txt');
-        } else {
-          res.writeHead(200, {
-            'Content-Type': 'text/plain',
-            'Content-Disposition': 'attachment; filename="interactions.txt"'
-          });
-          res.end(content);
-        }
-      });
-    });
-  } else {
-    res.writeHead(404);
-    res.end('Not Found');
-  }
+// Define file paths
+const logFolder = path.join(__dirname, 'logs');
+const errorsFilePath = path.join(logFolder, 'errors.txt');
+const interactionsFilePath = path.join(logFolder, 'interactions.txt');
+
+if (!fs.existsSync(logFolder)) {
+  fs.mkdirSync(logFolder);
+}
+
+// Serve static HTML page from /public folder
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Route for downloading errors.txt
+app.get('/errors.txt', (req, res) => {
+  res.download(errorsFilePath, 'errors.txt', (err) => {
+    if (err) {
+      res.status(500).send('Error downloading errors.txt');
+    }
+  });
 });
 
-// Set up WebSocket server on top of the HTTP server
+// Route for downloading interactions.txt
+app.get('/interactions.txt', (req, res) => {
+  res.download(interactionsFilePath, 'interactions.txt', (err) => {
+    if (err) {
+      res.status(500).send('Error downloading interactions.txt');
+    }
+  });
+});
+
+// Start the server and WebSocket on the same port
+const server = require('http').createServer(app);
+
+// Initialize WebSocket server on top of the HTTP server
 const wss = new WebSocket.Server({ server });
 
 // WebSocket connection logic
 wss.on('connection', (ws) => {
+  console.log('New client connected');
+
   ws.on('message', (message) => {
     const event = JSON.parse(message);
+    console.log('Received event:', event);
 
     const logMessage = `${event.type}: ${event.data}\n`;
 
     if (event.type === 'event.error') {
+      console.log('Logging error to errors.txt:', event.data);
       fs.appendFile(errorsFilePath, logMessage, (err) => {
         if (err) {
           console.error('Error writing to errors.txt:', err);
         }
       });
     } else if (event.type === 'event.interaction') {
+      console.log('Logging interaction to interactions.txt:', event.data);
       fs.appendFile(interactionsFilePath, logMessage, (err) => {
         if (err) {
           console.error('Error writing to interactions.txt:', err);
@@ -102,5 +77,5 @@ wss.on('connection', (ws) => {
 // Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
