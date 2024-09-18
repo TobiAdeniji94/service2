@@ -214,8 +214,10 @@ app.get('/', (req, res) => {
 
 // Serve log files for download
 app.get('/errors.txt', (req, res) => {
+  console.log(`Attempting to serve ${errorsFilePath}`);
     fs.access(errorsFilePath, fs.constants.F_OK, (err) => {
         if (err) {
+          console.log('errors.txt not found');
             return res.status(404).send('errors.txt not found');
         }
         res.download(errorsFilePath, 'errors.txt', (downloadErr) => {
@@ -236,8 +238,10 @@ app.get('/errors.txt', (req, res) => {
 });
 
 app.get('/interactions.txt', (req, res) => {
+  console.log(`Attempting to serve ${interactionsFilePath}`);
     fs.access(interactionsFilePath, fs.constants.F_OK, (err) => {
         if (err) {
+          console.log('interactions.txt not found');
             return res.status(404).send('interactions.txt not found');
         }
         res.download(interactionsFilePath, 'interactions.txt', (downloadErr) => {
