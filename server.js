@@ -96,30 +96,165 @@
 //   console.log(`Server is running on port ${PORT}`);
 // });
 
+// const express = require('express');
+// const fs = require('fs');
+// const path = require('path');
+// const WebSocket = require('ws');
+
+// // Create an Express app
+// const app = express();
+// const PORT = process.env.PORT || 3000;
+
+// // Set up WebSocket server on top of HTTP server
+// const server = require('http').createServer(app);
+// const wss = new WebSocket.Server({ server });
+
+// // Directory where logs will be stored
+// const logsDir = path.join(__dirname, 'logs');
+// const htmlFilePath = path.join(__dirname, 'public', 'index.html');
+
+
+// // Ensure logs directory exists
+// if (!fs.existsSync(logsDir)) {
+//     fs.mkdirSync(logsDir);
+// }
+
+// // WebSocket connection logic
+// wss.on('connection', (ws) => {
+//     console.log('New client connected');
+
+//     ws.on('message', (message) => {
+//         const event = JSON.parse(message);
+//         console.log("Received event:", event);
+
+//         const logMessage = `${event.type}: ${event.data}\n`;
+//         const logFileName = event.type === 'event.error' ? 'errors.txt' : 'interactions.txt';
+//         const logFilePath = path.join(logsDir, logFileName);
+
+//         // Append message to corresponding log file
+//         fs.appendFileSync(logFilePath, logMessage, (err) => {
+//             if (err) console.error('Error writing to log file:', err);
+//         });
+//     });
+
+//     ws.on('close', () => {
+//         console.log('Client disconnected');
+//     });
+// });
+
+// // Serve the static HTML file for the front end
+// app.get('/', (req, res) => {
+//   res.sendFile(htmlFilePath);
+// });
+
+// // Route to download and delete the log file
+// app.get('/download/:type', (req, res) => {
+//     const { type } = req.params;
+//     const fileName = type === 'error' ? 'errors.txt' : 'interactions.txt';
+//     const filePath = path.join(logsDir, fileName);
+
+//     // Check if the file exists
+//     fs.access(filePath, fs.constants.F_OK, (err) => {
+//         if (err) {
+//             return res.status(404).send(`${fileName} not found`);
+//         }
+
+//         // Serve the file for download and delete after sending
+//         res.download(filePath, fileName, (downloadErr) => {
+//             if (downloadErr) {
+//                 console.error('Error during file download:', downloadErr);
+//             } else {
+//                 // Delete the file after download
+//                 fs.unlink(filePath, (unlinkErr) => {
+//                     if (unlinkErr) {
+//                         console.error('Error deleting file:', unlinkErr);
+//                     } else {
+//                         console.log(`${fileName} deleted after download.`);
+//                     }
+//                 });
+//             }
+//         });
+//     });
+// });
+
+// // Start the server
+// server.listen(PORT, () => {
+//     console.log(`Server running on port ${PORT}`);
+// });
+
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
 
-// Create an Express app
+// Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Set up WebSocket server on top of HTTP server
-const server = require('http').createServer(app);
-const wss = new WebSocket.Server({ server });
-
-// Directory where logs will be stored
+// Define file paths
 const logsDir = path.join(__dirname, 'logs');
-const htmlFilePath = path.join(__dirname, 'public', 'index.html');
-
+const errorsFilePath = path.join(logsDir, 'errors.txt');
+const interactionsFilePath = path.join(logsDir, 'interactions.txt');
 
 // Ensure logs directory exists
 if (!fs.existsSync(logsDir)) {
     fs.mkdirSync(logsDir);
 }
 
-// WebSocket connection logic
+// Serve the HTML file
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Serve log files for download
+app.get('/errors.txt', (req, res) => {
+    fs.access(errorsFilePath, fs.constants.F_OK, (err) => {
+        if (err) {
+            return res.status(404).send('errors.txt not found');
+        }
+        res.download(errorsFilePath, 'errors.txt', (downloadErr) => {
+            if (downloadErr) {
+                console.error('Error during file download:', downloadErr);
+            } else {
+                // Optionally delete the file after download
+                fs.unlink(errorsFilePath, (unlinkErr) => {
+                    if (unlinkErr) {
+                        console.error('Error deleting errors.txt:', unlinkErr);
+                    } else {
+                        console.log('errors.txt deleted after download.');
+                    }
+                });
+            }
+        });
+    });
+});
+
+app.get('/interactions.txt', (req, res) => {
+    fs.access(interactionsFilePath, fs.constants.F_OK, (err) => {
+        if (err) {
+            return res.status(404).send('interactions.txt not found');
+        }
+        res.download(interactionsFilePath, 'interactions.txt', (downloadErr) => {
+            if (downloadErr) {
+                console.error('Error during file download:', downloadErr);
+            } else {
+                // Optionally delete the file after download
+                fs.unlink(interactionsFilePath, (unlinkErr) => {
+                    if (unlinkErr) {
+                        console.error('Error deleting interactions.txt:', unlinkErr);
+                    } else {
+                        console.log('interactions.txt deleted after download.');
+                    }
+                });
+            }
+        });
+    });
+});
+
+// Set up WebSocket server on top of the HTTP server
+const server = require('http').createServer(app);
+const wss = new WebSocket.Server({ server });
+
 wss.on('connection', (ws) => {
     console.log('New client connected');
 
@@ -131,49 +266,15 @@ wss.on('connection', (ws) => {
         const logFileName = event.type === 'event.error' ? 'errors.txt' : 'interactions.txt';
         const logFilePath = path.join(logsDir, logFileName);
 
-        // Append message to corresponding log file
-        fs.appendFileSync(logFilePath, logMessage, (err) => {
-            if (err) console.error('Error writing to log file:', err);
+        fs.appendFile(logFilePath, logMessage, (err) => {
+            if (err) {
+                console.error(`Error writing to ${logFileName}:`, err);
+            }
         });
     });
 
     ws.on('close', () => {
         console.log('Client disconnected');
-    });
-});
-
-// Serve the static HTML file for the front end
-app.get('/', (req, res) => {
-  res.sendFile(htmlFilePath);
-});
-
-// Route to download and delete the log file
-app.get('/download/:type', (req, res) => {
-    const { type } = req.params;
-    const fileName = type === 'error' ? 'errors.txt' : 'interactions.txt';
-    const filePath = path.join(logsDir, fileName);
-
-    // Check if the file exists
-    fs.access(filePath, fs.constants.F_OK, (err) => {
-        if (err) {
-            return res.status(404).send(`${fileName} not found`);
-        }
-
-        // Serve the file for download and delete after sending
-        res.download(filePath, fileName, (downloadErr) => {
-            if (downloadErr) {
-                console.error('Error during file download:', downloadErr);
-            } else {
-                // Delete the file after download
-                fs.unlink(filePath, (unlinkErr) => {
-                    if (unlinkErr) {
-                        console.error('Error deleting file:', unlinkErr);
-                    } else {
-                        console.log(`${fileName} deleted after download.`);
-                    }
-                });
-            }
-        });
     });
 });
 
