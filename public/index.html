@@ -1,42 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebSocket Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Interaction</title>
 </head>
 <body>
-  <h1>WebSocket Interaction</h1>
-  <input type="text" id="interactionInput" placeholder="Type something..." />
-  <button id="sendButton">Submit</button>
-  <button id="toggleError">Toggle Error</button>
+    <h1>WebSocket Client</h1>
 
-  <script>
-    const ws = new WebSocket('ws://service-wnu7.onrender.com');
+    <label for="interactionInput">Enter interaction data:</label>
+    <input type="text" id="interactionInput" placeholder="Type something...">
+    <button id="sendInteraction">Submit Interaction</button>
+    <button id="toggleError">Toggle Error</button>
 
-    ws.onopen = () => {
-      console.log('WebSocket is connected');
-    };
+    <script>
+        // WebSocket connection
+        const ws = new WebSocket('ws://service-wnu7.onrender.com');
 
-    ws.onmessage = (message) => {
-      console.log('Received:', message.data);
-    };
+        ws.onopen = function() {
+            console.log('WebSocket connection established');
+        };
 
-    ws.onclose = () => {
-      console.log('WebSocket is closed');
-    };
+        ws.onmessage = function(event) {
+            console.log('Message from server:', event.data);
+        };
 
-    // Send interaction event
-    document.getElementById('sendButton').addEventListener('click', () => {
-      const input = document.getElementById('interactionInput').value;
-      ws.send(JSON.stringify({ type: 'event.interaction', data: input }));
-    });
+        ws.onclose = function() {
+            console.log('WebSocket connection closed');
+        };
 
-    // Send error event
-    document.getElementById('toggleError').addEventListener('click', () => {
-      const randomString = Math.random().toString(36).substring(2, 15);
-      ws.send(JSON.stringify({ type: 'event.error', data: randomString }));
-    });
-  </script>
+        ws.onerror = function(error) {
+            console.log('WebSocket error:', error);
+        };
+
+        // Send interaction event
+        document.getElementById('sendInteraction').onclick = function() {
+            const interactionData = document.getElementById('interactionInput').value;
+            if (interactionData) {
+                ws.send(JSON.stringify({
+                    type: 'event.interaction',
+                    data: interactionData
+                }));
+                console.log('Sent interaction:', interactionData);
+            } else {
+                alert('Please enter some interaction data');
+            }
+        };
+
+        // Send error event
+        document.getElementById('toggleError').onclick = function() {
+            const errorData = Math.random().toString(36).substring(7);  // Generate a random unique string
+            ws.send(JSON.stringify({
+                type: 'event.error',
+                data: errorData
+            }));
+            console.log('Sent error:', errorData);
+        };
+    </script>
 </body>
 </html>
