@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket Test</title>
+</head>
+<body>
+  <h1>WebSocket Interaction</h1>
+  <input type="text" id="interactionInput" placeholder="Type something..." />
+  <button id="sendButton">Submit</button>
+  <button id="toggleError">Toggle Error</button>
+
+  <script>
+    const ws = new WebSocket('ws://localhost:3000');
+
+    ws.onopen = () => {
+      console.log('WebSocket is connected');
+    };
+
+    ws.onmessage = (message) => {
+      console.log('Received:', message.data);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket is closed');
+    };
+
+    // Send interaction event
+    document.getElementById('sendButton').addEventListener('click', () => {
+      const input = document.getElementById('interactionInput').value;
+      ws.send(JSON.stringify({ type: 'event.interaction', data: input }));
+    });
+
+    // Send error event
+    document.getElementById('toggleError').addEventListener('click', () => {
+      const randomString = Math.random().toString(36).substring(2, 15);
+      ws.send(JSON.stringify({ type: 'event.error', data: randomString }));
+    });
+  </script>
+</body>
+</html>
