@@ -111,6 +111,8 @@ const wss = new WebSocket.Server({ server });
 
 // Directory where logs will be stored
 const logsDir = path.join(__dirname, 'logs');
+const htmlFilePath = path.join(__dirname, 'public', 'index.html');
+
 
 // Ensure logs directory exists
 if (!fs.existsSync(logsDir)) {
@@ -138,6 +140,11 @@ wss.on('connection', (ws) => {
     ws.on('close', () => {
         console.log('Client disconnected');
     });
+});
+
+// Serve the static HTML file for the front end
+app.get('/', (req, res) => {
+  res.sendFile(htmlFilePath);
 });
 
 // Route to download and delete the log file
