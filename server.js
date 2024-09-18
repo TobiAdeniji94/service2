@@ -195,6 +195,7 @@ const PORT = process.env.PORT || 3000;
 const logsDir = path.join(__dirname, 'logs');
 const errorsFilePath = path.join(logsDir, 'errors.txt');
 const interactionsFilePath = path.join(logsDir, 'interactions.txt');
+const htmlFilePath = path.join(__dirname, 'public', 'index.html');
 
 // Ensure logs directory exists
 if (!fs.existsSync(logsDir)) {
@@ -202,8 +203,13 @@ if (!fs.existsSync(logsDir)) {
 }
 
 // Serve the HTML file
+// app.get('/', (req, res) => {
+//     res.sendFile(path.join(__dirname, '../public/index.html'));
+// });
+
+// Serve the static HTML file for the front end
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+  res.sendFile(htmlFilePath);
 });
 
 // Serve log files for download
